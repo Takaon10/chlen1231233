@@ -154,8 +154,6 @@ body{font-family:'Segoe UI',sans-serif;min-height:100vh;background:var(--bg);col
 .login-box p{color:var(--text2);margin-bottom:30px;font-size:14px}
 .login-box input{width:100%;padding:14px 16px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;outline:none;transition:.2s;margin-bottom:16px}
 .login-box input:focus{border-color:var(--accent);box-shadow:var(--glow)}
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding-bottom:20px;border-bottom:1px solid var(--border)}
-.header h1{font-size:22px;color:var(--accent);text-shadow:0 0 20px rgba(180,123,255,.4)}
 .header-actions{display:flex;gap:10px;align-items:center}
 .header-actions span{color:var(--text2);font-size:14px}
 .theme-dots{display:flex;gap:6px}
@@ -170,6 +168,12 @@ body{font-family:'Segoe UI',sans-serif;min-height:100vh;background:var(--bg);col
 .btn-outline:hover{border-color:var(--accent);color:var(--accent)}
 .btn-danger{background:var(--danger);color:#fff}
 .btn-sm{padding:7px 14px;font-size:12px}
+.profile-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding-bottom:20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:12px}
+.profile-info{display:flex;align-items:center;gap:12px}
+.profile-avatar{width:48px;height:48px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:24px}
+.profile-avatar.placeholder{background:var(--card)}
+.profile-name{font-size:18px;font-weight:700;color:var(--accent)}
+.profile-bio{font-size:12px;color:var(--text2);margin-top:2px}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;transition:.3s;position:relative;overflow:hidden}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);opacity:0;transition:.3s}
@@ -257,8 +261,14 @@ function renderDashboard() {
     app.innerHTML = `
     ${state.theme === 'sakura' ? '<div id="petals"></div>' : ''}
     <div class="container">
-      <div class="header">
-        <h1>🛡 ${state.profile?.username || 'Robrain'}</h1>
+      <div class="profile-bar">
+        <div class="profile-info">
+          ${state.profile?.avatar ? `<img src="${state.profile.avatar}" class="profile-avatar">` : '<div class="profile-avatar placeholder">👤</div>'}
+          <div>
+            <div class="profile-name">${state.profile?.username || 'Robrain'}</div>
+            <div class="profile-bio">${state.profile?.bio || ''}</div>
+          </div>
+        </div>
         <div class="header-actions">
           <span>${state.cookies.length} accounts</span>
           <button class="btn btn-outline btn-sm" onclick="refreshCookies()">🔄 Refresh</button>
