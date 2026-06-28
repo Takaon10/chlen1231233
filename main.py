@@ -7,6 +7,7 @@ from datetime import datetime
 app = FastAPI()
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "bucrf1212")
 SESSIONS = {}
+PROFILE = {"username": "Admin", "avatar": "", "bio": ""}
 
 # ─── MongoDB (или файл, если MongoDB нет) ───
 MONGO_URL = os.environ.get("MONGO_URL")
@@ -75,7 +76,7 @@ def require_session(request: Request):
 async def check_auth(request: Request):
     try:
         require_session(request)
-        return {"authenticated": True, "theme": "purple", "username": "Admin"}
+        return {"authenticated": True, "theme": "purple", **PROFILE}
     except: return JSONResponse({"authenticated": False}, status_code=401)
 
 @app.post("/api/login")
@@ -117,9 +118,17 @@ async def remove_cookie(idx: int, session=Depends(require_session)):
     delete_cookie(idx)
     return {"ok": True}
 
+@app.post("/api/settings")
+async def save_settings(request: Request, session=Depends(require_session)):
+    body = await request.json()
+    if "username" in body: PROFILE["username"] = body["username"]
+    if "avatar" in body: PROFILE["avatar"] = body["avatar"]
+    if "bio" in body: PROFILE["bio"] = body["bio"]
+    return {"ok": True}
+
 @app.get("/api/settings")
 async def get_settings(session=Depends(require_session)):
-    return {"theme": "purple", "username": "Admin"}
+    return {"theme": "purple", **PROFILE}
 
 HTML = r"""
 <!DOCTYPE html>
@@ -137,6 +146,7 @@ body{font-family:'Segoe UI',sans-serif;min-height:100vh;background:var(--bg);col
 [data-theme="green"]{--bg:#0a1a0a;--card:#0f2e0f;--border:#1a551a;--accent:#4dff4d;--accent2:#80ff80;--glow:0 0 20px rgba(77,255,77,.3);--glow2:0 0 40px rgba(77,255,77,.15);--btn-bg:#1a551a;--btn-hover:#257525}
 [data-theme="crimson"]{--bg:#0d0608;--card:#2e0d14;--border:#551525;--accent:#dc143c;--accent2:#ff4d6d;--glow:0 0 20px rgba(220,20,60,.3);--glow2:0 0 40px rgba(220,20,60,.15);--btn-bg:#551525;--btn-hover:#752035}
 [data-theme="gold"]{--bg:#0d0b04;--card:#2e2408;--border:#553d0a;--accent:#ffd700;--accent2:#ffe44d;--glow:0 0 20px rgba(255,215,0,.3);--glow2:0 0 40px rgba(255,215,0,.15);--btn-bg:#553d0a;--btn-hover:#755010}
+[data-theme="sakura"]{--bg:#1a0d12;--card:#2e1520;--border:#55253a;--accent:#ff69b4;--accent2:#ff99cc;--glow:0 0 20px rgba(255,105,180,.3);--glow2:0 0 40px rgba(255,105,180,.15);--btn-bg:#55253a;--btn-hover:#753550}
 .container{max-width:1200px;margin:0 auto;padding:30px 20px}
 .login-page{display:flex;align-items:center;justify-content:center;min-height:100vh}
 .login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:50px 40px;width:380px;box-shadow:var(--glow2);text-align:center}
@@ -152,12 +162,7 @@ body{font-family:'Segoe UI',sans-serif;min-height:100vh;background:var(--bg);col
 .theme-dot{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:.2s}
 .theme-dot:hover{transform:scale(1.15)}
 .theme-dot.active{border-color:var(--text);box-shadow:0 0 10px rgba(255,255,255,.2)}
-.theme-dot.purple{background:#b47bff}
-.theme-dot.blue{background:#4da6ff}
-.theme-dot.red{background:#ff4d4d}
-.theme-dot.green{background:#4dff4d}
-.theme-dot.crimson{background:#dc143c}
-.theme-dot.gold{background:#ffd700}
+.theme-dot.purple{background:#b47bff}.theme-dot.blue{background:#4da6ff}.theme-dot.red{background:#ff4d4d}.theme-dot.green{background:#4dff4d}.theme-dot.crimson{background:#dc143c}.theme-dot.gold{background:#ffd700}.theme-dot.sakura{background:#ff69b4}
 .btn{padding:10px 20px;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;transition:.2s;display:inline-flex;align-items:center;gap:6px}
 .btn-primary{background:var(--accent);color:var(--bg)}
 .btn-primary:hover{box-shadow:var(--glow);transform:translateY(-1px)}
@@ -187,6 +192,11 @@ body{font-family:'Segoe UI',sans-serif;min-height:100vh;background:var(--bg);col
 .modal h2{margin-bottom:20px;color:var(--accent)}
 .modal label{display:block;font-size:13px;color:var(--text2);margin-bottom:6px;margin-top:14px}
 .modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+@keyframes fall{0%{transform:translateY(-10vh) rotate(0deg);opacity:0}10%{opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+.petal{position:fixed;top:-10vh;width:14px;height:14px;background:#ff69b4;border-radius:50% 0;opacity:0;pointer-events:none;z-index:0;animation:fall linear infinite}
+.petal:nth-child(2n){width:10px;height:10px;background:#ff99cc}
+.petal:nth-child(3n){width:12px;height:12px;background:#ff85c8}
+.petal:nth-child(4n){border-radius:0 50%}
 </style>
 </head>
 <body><div id="app"></div>
@@ -207,6 +217,7 @@ async function init() {
     if (auth && auth.authenticated) {
         state.authenticated = true;
         state.theme = auth.theme || 'purple';
+        state.profile = { username: auth.username || 'Admin', avatar: auth.avatar || '', bio: auth.bio || '' };
         document.documentElement.setAttribute('data-theme', state.theme);
         const c = await api('GET', '/api/cookies');
         if (c) state.cookies = c;
@@ -244,9 +255,10 @@ async function login() {
 
 function renderDashboard() {
     app.innerHTML = `
+    ${state.theme === 'sakura' ? '<div id="petals"></div>' : ''}
     <div class="container">
       <div class="header">
-        <h1>🛡 Robrain</h1>
+        <h1>🛡 ${state.profile?.username || 'Robrain'}</h1>
         <div class="header-actions">
           <span>${state.cookies.length} accounts</span>
           <button class="btn btn-outline btn-sm" onclick="refreshCookies()">🔄 Refresh</button>
@@ -260,18 +272,41 @@ function renderDashboard() {
     <div class="modal-overlay" id="settings-modal">
       <div class="modal">
         <h2>⚙ Settings</h2>
+        <label>Display Name</label>
+        <input type="text" id="set-name" value="${state.profile?.username || ''}" placeholder="Your name">
+        <label>Avatar URL</label>
+        <input type="text" id="set-avatar" value="${state.profile?.avatar || ''}" placeholder="https://example.com/avatar.png">
+        <label>Bio</label>
+        <input type="text" id="set-bio" value="${state.profile?.bio || ''}" placeholder="About you">
         <label>Theme</label>
         <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
-          ${['purple','blue','red','green','crimson','gold'].map(t =>
+          ${['purple','blue','red','green','crimson','gold','sakura'].map(t =>
             `<div class="theme-dot ${t} ${state.theme===t?'active':''}" onclick="setTheme('${t}')"></div>`
           ).join('')}
         </div>
         <div class="modal-actions">
-          <button class="btn btn-primary" onclick="closeSettings()">Close</button>
+          <button class="btn btn-outline" onclick="closeSettings()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveProfile()">Save</button>
         </div>
       </div>
     </div>`;
+
+    if (state.theme === 'sakura') startPetals();
     renderCards();
+}
+
+function startPetals() {
+    const container = document.getElementById('petals');
+    if (!container || container.children.length > 0) return;
+    for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'petal';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (6 + Math.random() * 8) + 's';
+        p.style.animationDelay = Math.random() * 10 + 's';
+        p.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
+        container.appendChild(p);
+    }
 }
 
 function renderCards() {
@@ -315,6 +350,16 @@ async function refreshCookies() {
 
 function openSettings() { document.getElementById('settings-modal').classList.add('open'); }
 function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
+
+async function saveProfile() {
+    const name = document.getElementById('set-name').value;
+    const avatar = document.getElementById('set-avatar').value;
+    const bio = document.getElementById('set-bio').value;
+    const r = await api('POST', '/api/settings', { username: name, avatar, bio, theme: state.theme });
+    if (r) state.profile = { username: name, avatar, bio };
+    closeSettings();
+    renderDashboard();
+}
 
 async function setTheme(t) {
     state.theme = t;
