@@ -378,6 +378,7 @@ function renderCards() {
       <div class="card-cookie" onclick="copyText('${c.cookie.replace(/'/g, "\\'")}')" title="Click to copy">${c.cookie}</div>
       <div class="card-bottom">
         <button class="btn btn-primary btn-sm" onclick="loginToRoblox('${c.cookie.replace(/'/g, "\\'")}')">▶ Login</button>
+        <button class="btn btn-outline btn-sm" onclick="copyText('${c.cookie.replace(/'/g, "\\'")}')">📋 Copy</button>
         <button class="btn btn-danger btn-sm" onclick="deleteCookie(${i})">✕ Delete</button>
       </div>
     </div>`).join('');
