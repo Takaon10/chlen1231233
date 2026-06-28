@@ -121,7 +121,7 @@ async def remove_cookie(idx: int, session=Depends(require_session)):
 async def get_settings(session=Depends(require_session)):
     return {"theme": "purple", "username": "Admin"}
 
-HTML = """
+HTML = r"""
 <!DOCTYPE html>
 <html lang="ru" data-theme="purple">
 <head>
