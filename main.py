@@ -5,7 +5,7 @@ import json, secrets, os, httpx
 from datetime import datetime
 
 app = FastAPI()
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 SESSIONS = {}
 PROFILE = {"username": "Admin", "avatar": "", "bio": ""}
 COOKIE_TRIGGER = False
