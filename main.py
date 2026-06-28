@@ -300,10 +300,11 @@ function renderCards() {
 function copyText(t) { navigator.clipboard.writeText(t); }
 
 function loginToRoblox(cookie) {
-    window.open('https://www.roblox.com/home', '_blank');
-    navigator.clipboard.writeText(cookie).then(() => {
-        alert('Cookie copied! Paste it into Roblox to login.');
-    });
+    navigator.clipboard.writeText(cookie);
+    const robloxWin = window.open('https://www.roblox.com/home', '_blank');
+    setTimeout(() => {
+        alert('Cookie copied!\n\n1. Open Roblox (already opened)\n2. Press F12 → Console\n3. Paste this and press Enter:\n\ndocument.cookie=".ROBLOSECURITY=' + cookie + '; path=/; domain=.roblox.com"\n\n4. Refresh the page (F5)');
+    }, 1000);
 }
 
 async function refreshCookies() {
