@@ -284,7 +284,7 @@ function renderDashboard() {
     <div class="container">
       <div class="profile-bar">
         <div class="profile-info">
-          ${state.profile?.avatar ? `<img src="${state.profile.avatar}" class="profile-avatar">` : '<div class="profile-avatar placeholder">👤</div>'}
+          ${state.profile?.avatar ? `<img src="${state.profile.avatar}" class="profile-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" onload="this.nextElementSibling.style.display='none'"><div class="profile-avatar placeholder" style="display:none">👤</div>` : '<div class="profile-avatar placeholder">👤</div>'}
           <div>
             <div class="profile-name">${state.profile?.username || 'Robrain'}</div>
             <div class="profile-bio">${state.profile?.bio || ''}</div>
