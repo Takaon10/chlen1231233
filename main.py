@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 app = FastAPI()
 
 DATA_FILE = "data.json"
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "bucrf1212")
 SESSIONS = {}
 
 def load_data():
