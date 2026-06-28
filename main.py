@@ -181,6 +181,12 @@ body{font-family:'Segoe UI',sans-serif;min-height:100vh;background:var(--bg);col
 .empty h2{color:var(--accent);margin-bottom:8px}
 .logout-btn{background:none;border:1px solid var(--danger);color:var(--danger);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;transition:.2s}
 .logout-btn:hover{background:var(--danger);color:#fff}
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:30px;width:420px;max-width:90vw}
+.modal h2{margin-bottom:20px;color:var(--accent)}
+.modal label{display:block;font-size:13px;color:var(--text2);margin-bottom:6px;margin-top:14px}
+.modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
 </style>
 </head>
 <body><div id="app"></div>
@@ -243,15 +249,27 @@ function renderDashboard() {
         <h1>🛡 Robrain</h1>
         <div class="header-actions">
           <span>${state.cookies.length} accounts</span>
-          <div class="theme-dots">
-            ${['purple','blue','red','green','crimson','gold'].map(t =>
-              `<div class="theme-dot ${t} ${state.theme===t?'active':''}" onclick="setTheme('${t}')"></div>`
-            ).join('')}
-          </div>
+          <button class="btn btn-outline btn-sm" onclick="refreshCookies()">🔄 Refresh</button>
+          <button class="btn btn-outline btn-sm" onclick="openSettings()">⚙ Settings</button>
           <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
       </div>
       <div class="cards" id="cards"></div>
+    </div>
+
+    <div class="modal-overlay" id="settings-modal">
+      <div class="modal">
+        <h2>⚙ Settings</h2>
+        <label>Theme</label>
+        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+          ${['purple','blue','red','green','crimson','gold'].map(t =>
+            `<div class="theme-dot ${t} ${state.theme===t?'active':''}" onclick="setTheme('${t}')"></div>`
+          ).join('')}
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" onclick="closeSettings()">Close</button>
+        </div>
+      </div>
     </div>`;
     renderCards();
 }
@@ -273,13 +291,29 @@ function renderCards() {
       </div>
       <div class="card-cookie" onclick="copyText('${c.cookie.replace(/'/g, "\\'")}')" title="Click to copy">${c.cookie}</div>
       <div class="card-bottom">
-        <button class="btn btn-primary btn-sm" onclick="copyText('${c.cookie.replace(/'/g, "\\'")}')">📋 Copy</button>
+        <button class="btn btn-primary btn-sm" onclick="loginToRoblox('${c.cookie.replace(/'/g, "\\'")}')">▶ Login</button>
         <button class="btn btn-danger btn-sm" onclick="deleteCookie(${i})">✕ Delete</button>
       </div>
     </div>`).join('');
 }
 
 function copyText(t) { navigator.clipboard.writeText(t); }
+
+function loginToRoblox(cookie) {
+    window.open('https://www.roblox.com/home', '_blank');
+    navigator.clipboard.writeText(cookie).then(() => {
+        alert('Cookie copied! Paste it into Roblox to login.');
+    });
+}
+
+async function refreshCookies() {
+    const c = await api('GET', '/api/cookies');
+    if (c) state.cookies = c;
+    renderCards();
+}
+
+function openSettings() { document.getElementById('settings-modal').classList.add('open'); }
+function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
 
 async function setTheme(t) {
     state.theme = t;
